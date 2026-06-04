@@ -8,6 +8,12 @@ import (
 	"github.com/lafriks/go-tiled/render"
 )
 
+const (
+	tileSize               = 64
+	visibleVerticalTiles   = 30
+	visibleHorizontalTiles = 54
+)
+
 type Game struct {
 	mapImage *ebiten.Image
 }
@@ -17,14 +23,11 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Scale(.25, .25)
-
-	screen.DrawImage(g.mapImage, op)
+	screen.DrawImage(g.mapImage, nil)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 600, 400
+	return tileSize * visibleHorizontalTiles, tileSize * visibleVerticalTiles
 }
 
 func main() {
@@ -43,8 +46,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ebiten.SetWindowSize(600, 400)
 	ebiten.SetWindowTitle("Hello, World!")
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	ebiten.SetFullscreen(true)
 
 	if err := ebiten.RunGame(&Game{
 		mapImage: ebiten.NewImageFromImage(renderer.Result),
