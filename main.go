@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	tileSize               = 64
-	visibleVerticalTiles   = 30
-	visibleHorizontalTiles = 54
+	tileSize               = 16
+	visibleVerticalTiles   = 18
+	visibleHorizontalTiles = 32
 )
 
 type Game struct {
