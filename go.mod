@@ -1,4 +1,4 @@
-module github.com/aecsar/map-parsing
+module github.com/aecsar/ebiten-rpg
 
 go 1.26.1
 
