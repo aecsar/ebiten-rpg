@@ -44,7 +44,7 @@ const (
 	characterSpriteSpacing = 32
 	characterSpritePadding = 16
 
-	characterSpeed                = 1
+	characterSpeed                = 1.5
 	characterAnimationFramesCount = 2
 )
 
@@ -80,8 +80,8 @@ func (g *Game) Update() error {
 		g.player.isMoving = true
 
 		length := math.Sqrt(dx*dx + dy*dy)
-		g.player.x += (dx / length) * characterSpeed
-		g.player.y += (dy / length) * characterSpeed
+		g.player.x += math.Round((dx / length) * characterSpeed)
+		g.player.y += math.Round((dy / length) * characterSpeed)
 	}
 
 	g.counter++
@@ -98,13 +98,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(mapImage, nil)
 
 	charOp := &ebiten.DrawImageOptions{}
-	charOp.GeoM.Translate(float64(g.player.x), float64(g.player.y))
 
+	charOp.GeoM.Translate(g.player.x, g.player.y)
+
+	// move vertical spritesheet index based on direction
 	currentMovOffset := ((characterSpriteSize + characterSpriteSpacing) * int(g.player.direction))
 
+	// move frames are last two frames of spritesheet and idle frames are first two ones
 	currentFrameOffset := (characterSpriteSize + characterSpriteSpacing) * characterAnimationCurrentFrame
 	if g.player.isMoving {
-		// move frames are last two frames of spritesheet and idle frames are first two ones
 		currentFrameOffset += (characterSpriteSize + characterSpriteSpacing) * 2
 	}
 
@@ -136,7 +138,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ebiten.SetWindowTitle("Hello, World!")
+	ebiten.SetWindowTitle("Ebiten RPG")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetFullscreen(true)
 
