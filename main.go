@@ -44,7 +44,7 @@ const (
 	characterSpriteSpacing = 32
 	characterSpritePadding = 16
 
-	characterSpeed                = 1.5
+	characterSpeed                = 3
 	characterAnimationFramesCount = 2
 )
 
@@ -95,11 +95,22 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.DrawImage(mapImage, nil)
-
 	charOp := &ebiten.DrawImageOptions{}
 
-	charOp.GeoM.Translate(g.player.x, g.player.y)
+	// charOp.GeoM.Translate(g.player.x, g.player.y)
+	charOp.GeoM.Translate(
+		(tileSize*visibleHorizontalTiles)/2,
+		(tileSize*visibleVerticalTiles)/2,
+	)
+
+	mapOp := &ebiten.DrawImageOptions{}
+
+	mapOp.GeoM.Translate(
+		-g.player.x+((tileSize*visibleHorizontalTiles)/2),
+		-g.player.y+((tileSize*visibleVerticalTiles)/2),
+	)
+
+	screen.DrawImage(mapImage, mapOp)
 
 	// move vertical spritesheet index based on direction
 	currentMovOffset := ((characterSpriteSize + characterSpriteSpacing) * int(g.player.direction))
