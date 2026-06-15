@@ -2,13 +2,15 @@ package main
 
 import (
 	"image"
+	"image/color"
 	"log"
 	"math"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/lafriks/go-tiled"
-	"github.com/lafriks/go-tiled/render"
+	"github.com/solarlune/ldtkgo"
+	renderer "github.com/solarlune/ldtkgo/renderer/ebitengine"
 )
 
 const (
@@ -33,7 +35,6 @@ type player struct {
 }
 
 var (
-	mapImage        *ebiten.Image
 	characterSprite *ebiten.Image
 
 	characterAnimationCurrentFrame = 0
@@ -110,7 +111,39 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		-g.player.y+((tileSize*visibleVerticalTiles)/2),
 	)
 
-	screen.DrawImage(mapImage, mapOp)
+	level := ldtkProject.Levels[0]
+
+	if err := ebitenRenderer.Render(level, screen, &renderer.DrawOptions{
+		LayerDrawOptions: mapOp,
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	for _, layer := range level.Layers {
+		if layer.Type != ldtkgo.LayerTypeEntity {
+			continue
+		}
+
+		for _, entity := range layer.Entities {
+			// entity.Position is [x, y] in world space
+			ex := float64(entity.Position[0])
+			ey := float64(entity.Position[1])
+
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(
+				ex-g.player.x+(float64(tileSize*visibleHorizontalTiles)/2),
+				ey-g.player.y+(float64(tileSize*visibleVerticalTiles)/2),
+			)
+
+			// Draw a placeholder rect or a real sprite based on entity.Identifier
+			ebitenutil.DrawRect(screen,
+				ex-g.player.x+(float64(tileSize*visibleHorizontalTiles)/2),
+				ey-g.player.y+(float64(tileSize*visibleVerticalTiles)/2),
+				float64(entity.Width), float64(entity.Height),
+				color.RGBA{255, 0, 0, 180},
+			)
+		}
+	}
 
 	// move vertical spritesheet index based on direction
 	currentMovOffset := ((characterSpriteSize + characterSpriteSpacing) * int(g.player.direction))
@@ -133,18 +166,21 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return tileSize * visibleHorizontalTiles, tileSize * visibleVerticalTiles
 }
 
+var ldtkProject *ldtkgo.Project
+var ebitenRenderer *renderer.Renderer
+
 func main() {
-	gameMap, err := tiled.LoadFile("maps/map.tmx")
+	projFile, err := os.ReadFile("learning.ldtk")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	renderer, err := render.NewRenderer(gameMap)
+	ldtkProject, err = ldtkgo.Read(projFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = renderer.RenderVisibleLayersAndObjectGroups()
+	ebitenRenderer, err = renderer.New(os.DirFS("."), ldtkProject)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -153,7 +189,6 @@ func main() {
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetFullscreen(true)
 
-	mapImage = ebiten.NewImageFromImage(renderer.Result)
 	characterSprite, _, err = ebitenutil.NewImageFromFile("sprites/character.png")
 	if err != nil {
 		log.Fatal(err)
